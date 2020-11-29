@@ -1,0 +1,30 @@
+review:
+  stage: review
+  script:
+    - /opt/scripts/deploy_env.sh create
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    allow_failure: true
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
+    url: https://$CI_COMMIT_REF_SLUG.tech.domain.ru/
+    on_stop: stop_review
+    auto_stop_in: 4 days
+  tags:
+    - qa-env
+    
+stop_review:
+  stage: review
+  variables:
+  # не подтягивать изменения. Необходимо, если ветка удалена
+    GIT_STRATEGY: none
+  script: /opt/scripts/deploy_env.sh delete
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: manual
+    allow_failure: true
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
+    action: stop
+  tags:
+    - qa-env
